@@ -1,0 +1,1 @@
+exports.NumberFixed = (startNumber, endNumber) => Number(Math.round((startNumber + endNumber) * 100) / 100);
