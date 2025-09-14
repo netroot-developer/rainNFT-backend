@@ -27,7 +27,7 @@ async function sendToOtp({ subject, html, user, otp,text }) {
             },
         });
         const result = await transporter.sendMail({
-            from:`Sterlink Global Trading <${GMAIL_USER_EMAIL}>`,
+            from:`Rain NFT Trading <${GMAIL_USER_EMAIL}>`,
             to: user?.email, // Use the email from the user object
             subject: 'RNFT '+ (subject || 'Account Verification OTP ✔'),
             text:text || null,
