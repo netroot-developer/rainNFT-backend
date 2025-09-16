@@ -10,20 +10,15 @@ const { RebirthIdModel } = require("../models/rebirthId.model");
 const { CommissionModel } = require("../models/commission.model");
 const { BoostingIdModel } = require("../models/boostingId.model");
 const { BoosterInvestModel } = require("../models/booster.model");
+const { ControllerModel } = require("../models/controller.model");
 
 
 exports.getUser = async (req, res) => {
   try {
     const user = await UserModel.findById(req.user._id, { token: 0, package: 0,otpDetails:0 }).populate([{ path: 'sponsor', select: 'username' }, { path: "income", select: '-user -updatedAt -createdAt' }]);
     if (!user) return res.status(500).json({ success: false, message: "User not found." });
-    const password = user.password;
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-    const todayBoosters = await BoosterInvestModel.countDocuments({ user: user._id, createdAt: { $gte: startOfDay, $lte: endOfDay } });
-    const boostingLimitExpire = (todayBoosters <= 10)
-    res.status(200).json({ success: true, data: { ...user?._doc, password, boostingLimitExpire }, message: "Get Profile successfully." })
+    const controller = await ControllerModel.findOne({}, { "walletDetails.address": 1 })
+    res.status(200).json({ success: true, data: { ...user?._doc, adminWalletAddress: controller?.walletDetails?.address }, message: "Get Profile successfully." })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }

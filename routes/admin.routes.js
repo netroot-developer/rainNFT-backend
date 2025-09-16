@@ -15,7 +15,7 @@ router.post('/update-user/:id', AdminController.UserProfileUpdate);
 router.get('/login-access/:id', isAdminLoggedIn, AdminController.loginAdminAccessUser);
 
 // PACKAGE PACKAGE BUY -----------
-router.post('/fund-add', TransactionController.packagePurchaseRequest);
+router.post('/add-fund', TransactionController.packagePurchaseRequest);
 router.post('/fund-approved', TransactionController.packagePurchaseApproved);
 
 // BOOSTING PACKAGE BUY -----------

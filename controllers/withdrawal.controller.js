@@ -9,22 +9,23 @@ const { isAddress } = require("ethers");
 const { generateOTP } = require("../utils/generateOTP");
 const { withdrawalRequestTemplete } = require("../utils/mailtemplate");
 const { sendToOtp } = require("../utils/sendtootp.nodemailer");
+const { ControllerModel } = require("../models/controller.model");
 
-exports.withdrawalRequestSendOtp  = async (req, res) => {
+exports.withdrawalRequestSendOtp = async (req, res) => {
     try {
-        const {amount} = req.body;
+        const { amount } = req.body;
         if (!amount || amount < 0) res.status(500).json({ success: false, message: 'Amount & Wallet address are required.' });
         if (amount < 50) res.status(500).json({ success: false, message: 'Minimum $50 withdrawal.' });
         const amountNumber = Number(amount);
-        const user = await UserModel.findOne({ _id: req.user._id }, { email: 1, otpDetails: 1, username: 1, id: 1,email:1,mobile:1 });
+        const user = await UserModel.findOne({ _id: req.user._id }, { email: 1, otpDetails: 1, username: 1, id: 1, email: 1, mobile: 1 });
         if (!user) return res.status(400).json({ success: false, message: "User not found" });
-        const incomeDetails = await IncomeDetailModel.findOne({ user: user._id }, { currentIncome: 1}).populate({ path: "user", select: "username account" })
+        const incomeDetails = await IncomeDetailModel.findOne({ user: user._id }, { currentIncome: 1 }).populate({ path: "user", select: "username account" })
         if (incomeDetails.currentIncome < amountNumber) return res.status(500).json({ success: false, message: `Insufficient balance. Please try again with an amount within your available limit.` });
         const { otp, otpExpiry } = generateOTP({});
         user.otpDetails.otp = otp;
         user.otpDetails.otpExpiry = otpExpiry;
-        const {html,text} = await withdrawalRequestTemplete(user, amount, otp, new Date());
-        await sendToOtp({ user: user, otp,html,text, subject: "💸 Withdrawal Request Confirmation - Sterlink Global Trading" });
+        const { html, text } = await withdrawalRequestTemplete(user, amount, otp, new Date());
+        await sendToOtp({ user: user, otp, html, text, subject: "💸 Withdrawal Request Confirmation - Sterlink Global Trading" });
         await user.save();
         res.json({ success: true, message: "📩 OTP sent successfully to your registered email.", data: { id: user._id, email: user.email } });
     } catch (err) {
@@ -34,11 +35,11 @@ exports.withdrawalRequestSendOtp  = async (req, res) => {
 
 exports.WalletWithdrawalRequest = async (req, res) => {
     try {
-        const { amount, walletAddress,otp } = req.body
+        const { amount, walletAddress, otp } = req.body
         if (!amount || amount < 0 || !walletAddress || !otp) res.status(500).json({ success: false, message: 'Amount & Wallet address are required.' });
         if (!isAddress(walletAddress)) return res.status(500).json({ success: false, message: "Invalid wallet address. Please provide a valid address." })
 
-        const userFind = await UserModel.findById(req.user._id,{otpDetails:1})
+        const userFind = await UserModel.findById(req.user._id, { otpDetails: 1 })
         if (!userFind.otpDetails.otp || !userFind.otpDetails.otpExpiry) return res.status(400).json({ success: false, message: "OTP not generated" });
         if (Date.now() > userFind.otpDetails.otpExpiry) return res.status(400).json({ success: false, message: "OTP expired" })
         if (userFind.otpDetails.otp != otp) return res.status(400).json({ success: false, message: "Invalid OTP" })
@@ -72,7 +73,8 @@ exports.WithdrawalAccepted = async (req, res) => {
         const user = await IncomeDetailModel.findOne({ user: newWith.user }).populate({ path: "user", select: "investment levelCount" });
         if (!user) res.status(500).json({ success: false, message: 'User does not exist.' });
         if (status === 'Completed') {
-            const hash = await sendUsdtWithdrawal({ toAddress: newWith.clientAddress, amount: newWith.investment * 0.95 });
+            const controller = await ControllerModel.findOne({}, { walletDetails: 1 });
+            const hash = await sendUsdtWithdrawal({ toAddress: newWith.clientAddress, amount: newWith.investment * 0.95, PRIVATE_KEY: controller.walletDetails.key });
             if (!hash) return res.status(500).json({ success: false, message: "Insufficient balance." });
             newWith.status = 'Completed';
             newWith.hash = hash;
