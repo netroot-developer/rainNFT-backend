@@ -16,7 +16,7 @@ const { default: mongoose } = require("mongoose");
 exports.packagePurchaseRequest = async (req, res) => {
     try {
         const { amount, hash } = req.body;
-        const query = mongoose.Types.ObjectId.isValid(req?.body?.userId)? { _id: req?.body?.userId }: { id: req?.body?.userId };
+        const query = mongoose.Types.ObjectId.isValid(req?.user?._id)? { _id: req?.user?._id }: { id: req?.body?.userId };
         const user = await UserModel.findOne(query, {id:1, active: 1, account: 1, investment: 1, role: 1, levelCount: 1,sponsor:1 });
         const amountNumber = Number(amount);
         if (!user) return res.status(500).json({ success: false, message: "User not found." });

@@ -15,7 +15,7 @@ exports.withdrawalRequestSendOtp = async (req, res) => {
     try {
         const { amount } = req.body;
         if (!amount || amount < 0) res.status(500).json({ success: false, message: 'Amount & Wallet address are required.' });
-        if (amount < 50) res.status(500).json({ success: false, message: 'Minimum $50 withdrawal.' });
+        if (amount < 0) res.status(500).json({ success: false, message: 'Minimum $50 withdrawal.' });
         const amountNumber = Number(amount);
         const user = await UserModel.findOne({ _id: req.user._id }, { email: 1, otpDetails: 1, username: 1, id: 1, email: 1, mobile: 1 });
         if (!user) return res.status(400).json({ success: false, message: "User not found" });
@@ -44,7 +44,7 @@ exports.WalletWithdrawalRequest = async (req, res) => {
         if (Date.now() > userFind.otpDetails.otpExpiry) return res.status(400).json({ success: false, message: "OTP expired" })
         if (userFind.otpDetails.otp != otp) return res.status(400).json({ success: false, message: "Invalid OTP" })
         const amountNumber = Number(amount);
-        if (amountNumber < 5) return res.status(500).json({ success: false, message: 'Minimum withdrawal amount is $5.' });
+        if (amountNumber < 0) return res.status(500).json({ success: false, message: 'Minimum withdrawal amount is $5.' });
         const user = await IncomeDetailModel.findOne({ user: req.user._id }, { currentIncome: 1, user: 1, withdrawal: 1 }).populate({ path: "user", select: "username account" })
         if (!user) res.status(500).json({ success: false, message: 'User does not exist.' });
         if (user.currentIncome < amountNumber) return res.status(500).json({ success: false, message: `Insufficient balance. Please try again with an amount within your available limit.` });
