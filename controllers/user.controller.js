@@ -14,7 +14,7 @@ const { BoosterInvestModel } = require("../models/booster.model");
 
 exports.getUser = async (req, res) => {
   try {
-    const user = await UserModel.findById(req.user._id, { token: 0, package: 0,otpDetails:0 }).populate([{ path: 'sponsor', select: 'username' }, { path: "income", select: '-user -updatedAt -createdAt' }]);
+    const user = await UserModel.findById(req.user._id, { token: 0, package: 0, otpDetails: 0 }).populate([{ path: 'sponsor', select: 'username' }, { path: "income", select: '-user -updatedAt -createdAt' }]);
     if (!user) return res.status(500).json({ success: false, message: "User not found." });
     const password = user.password;
     const startOfDay = new Date();
@@ -321,8 +321,8 @@ exports.getIncomeSummary = async (req, res) => {
       reward: { model: CommissionModel, field: "income", match: { type: { $in: ["Reward"] } } },
       trading: { model: CommissionModel, field: "income", match: { type: "Trading" } },
       // nonWorking: { model: CommissionModel, field: "income", match: { type: { $in: ["Non-Working"] } } },
-      transaction: { model: TransactionModel, field: "investment", match: { type: "Deposit",status:"Completed" } },
-      withdraw: { model: TransactionModel, field: "investment", match: { type: "Withdrawal",status:"Completed" } },
+      transaction: { model: TransactionModel, field: "investment", match: { type: "Deposit", status: "Completed" } },
+      withdraw: { model: TransactionModel, field: "investment", match: { type: "Withdrawal", status: "Completed" } },
     };
     const results = {};
 
@@ -366,11 +366,17 @@ exports.getIncomeSummary = async (req, res) => {
           as: "downline",
         }
       },
-      { $project: { totalDownlineUsers: { $size: "$downline" } } }
+      {
+        $project: {
+          totalDownlineUsers: { $size: "$downline" },
+          totalTeamInvestment: { $sum: "$downline.investment" } // 👈 add sum of investments
+        }
+      }
     ]);
     const totalDownlineUsers = downlineUsers[0]?.totalDownlineUsers || 0;
-    const todayRoiReport = await CommissionModel.findOne({user:user._id,type:"Trading"},{income:1,percentage:1,amount:1,type:1}).sort({createdAt:-1})
-    return res.status(200).json({ success: true, message: "Get User Income Summary", data: { ...results, totalIncome, walletBalance,totalDirectUsers,totalDownlineUsers,todayRoiReport } });
+    const totalTeamInvestment = downlineUsers[0]?.totalTeamInvestment || 0;
+    const todayRoiReport = await CommissionModel.findOne({ user: user._id, type: "Trading" }, { income: 1, percentage: 1, amount: 1, type: 1 }).sort({ createdAt: -1 })
+    return res.status(200).json({ success: true, message: "Get User Income Summary", data: { ...results, totalIncome, walletBalance, totalDirectUsers, totalDownlineUsers,totalTeamInvestment, todayRoiReport } });
   } catch (error) {
     console.error("Get Income Summary Error:", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });

@@ -9,6 +9,7 @@ const { isAddress } = require("ethers");
 const { generateOTP } = require("../utils/generateOTP");
 const { withdrawalRequestTemplete } = require("../utils/mailtemplate");
 const { sendToOtp } = require("../utils/sendtootp.nodemailer");
+const { getDailyProfitPercentage } = require("../utils/activedays.date");
 
 exports.withdrawalRequestSendOtp  = async (req, res) => {
     try {
@@ -38,7 +39,7 @@ exports.WalletWithdrawalRequest = async (req, res) => {
         if (!amount || amount < 0 || !walletAddress || !otp) res.status(500).json({ success: false, message: 'Amount & Wallet address are required.' });
         if (!isAddress(walletAddress)) return res.status(500).json({ success: false, message: "Invalid wallet address. Please provide a valid address." })
 
-        const userFind = await UserModel.findById(req.user._id,{otpDetails:1})
+        const userFind = await UserModel.findById(req.user._id,{otpDetails:1,"active.activeDate":1})
         if (!userFind.otpDetails.otp || !userFind.otpDetails.otpExpiry) return res.status(400).json({ success: false, message: "OTP not generated" });
         if (Date.now() > userFind.otpDetails.otpExpiry) return res.status(400).json({ success: false, message: "OTP expired" })
         if (userFind.otpDetails.otp != otp) return res.status(400).json({ success: false, message: "Invalid OTP" })
@@ -48,7 +49,8 @@ exports.WalletWithdrawalRequest = async (req, res) => {
         if (!user) res.status(500).json({ success: false, message: 'User does not exist.' });
         if (user.currentIncome < amountNumber) return res.status(500).json({ success: false, message: `Insufficient balance. Please try again with an amount within your available limit.` });
         const id = generateCustomId({ prefix: "SGT-TX", min: 10, max: 10 });
-        const newWith = new TransactionModel({ id, clientAddress: walletAddress, mainAddress: process.env.WALLET_ADDRESS, percentage: 5, role: 'USER', investment: amountNumber, user: user.user, status: "Processing", type: "Withdrawal" });
+        const percentageDayBise = getDailyProfitPercentage(userFind.active.activeDate);
+        const newWith = new TransactionModel({ id, clientAddress: walletAddress, mainAddress: process.env.WALLET_ADDRESS, percentage: percentageDayBise ?? 10, role: 'USER', investment: amountNumber, user: user.user, status: "Processing", type: "Withdrawal" });
         user.withdrawal += Number(amountNumber);
         user.currentIncome -= Number(amountNumber);
 
@@ -72,7 +74,8 @@ exports.WithdrawalAccepted = async (req, res) => {
         const user = await IncomeDetailModel.findOne({ user: newWith.user }).populate({ path: "user", select: "investment levelCount" });
         if (!user) res.status(500).json({ success: false, message: 'User does not exist.' });
         if (status === 'Completed') {
-            const hash = await sendUsdtWithdrawal({ toAddress: newWith.clientAddress, amount: newWith.investment * 0.95 });
+            const amount = newWith.investment - (newWith.investment * (newWith.percentage / 100));
+            const hash = await sendUsdtWithdrawal({ toAddress: newWith.clientAddress, amount: amount });
             if (!hash) return res.status(500).json({ success: false, message: "Insufficient balance." });
             newWith.status = 'Completed';
             newWith.hash = hash;
