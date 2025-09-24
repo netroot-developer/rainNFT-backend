@@ -9,13 +9,15 @@ const { IncomeDetailModel } = require("../models/incomedetail.model");
 const { calculateLevelMultiArrayDownline } = require("../utils/getteams.downline");
 const { directIncomeCalculate } = require("../utils/calculateDirect.icome");
 const { CommissionModel } = require("../models/commission.model");
+const { default: mongoose } = require("mongoose");
 
 
 // 1. FUND PURCHASE
 exports.packagePurchaseRequest = async (req, res) => {
     try {
         const { amount, hash } = req.body;
-        const user = await UserModel.findOne({ '$or': [{ _id: req?.user?._id || req?.body?.userId }] }, {id:1, active: 1, account: 1, investment: 1, role: 1, levelCount: 1,sponsor:1 });
+        const query = mongoose.Types.ObjectId.isValid(req?.user?._id)? { _id: req?.user?._id }: { id: req?.body?.userId };
+        const user = await UserModel.findOne(query, {id:1, active: 1, account: 1, investment: 1, role: 1, levelCount: 1,sponsor:1 });
         const amountNumber = Number(amount);
         if (!user) return res.status(500).json({ success: false, message: "User not found." });
         const idTx = generateCustomId({ prefix: 'RNFT', max: 10, min: 10 });

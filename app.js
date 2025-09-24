@@ -17,8 +17,8 @@ const { limiter } = require('./utils/rateLimit');
 const { syncUserSession } = require("./utils/syncUserSession.session");
 const { requestLogger, errorLogger } = require('./middleware/logger.middleware');
 require("./utils/config.db")();
-require("./utils/admin.autoregister").AdminRegisterAuto();
-require("./utils/admin.autoregister").ControllerCreateAuto();
+// require("./utils/admin.autoregister").AdminRegisterAuto();
+// require("./utils/admin.autoregister").ControllerCreateAuto();
 require("./utils/calculateTrading.income")
 // require("./utils/autopull/autoslot");
 // require("./utils/boostingpull/boostingslot");

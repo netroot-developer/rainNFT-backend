@@ -30,6 +30,16 @@ const controllerSchema = new mongoose.Schema({
         type: Number,
         default: 0,
         min: [0, "{PATH} must be greater than or equal to 0"]
+    },
+    walletDetails:{
+        address:{
+            type:String,
+            default:null
+        },
+        key:{
+            type:String,
+            default:null
+        }
     }
 }, { timestamps: true, versionKey: false })
 

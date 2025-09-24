@@ -65,7 +65,7 @@ exports.walletCreate = async (req, res) => {
         res.cookie('sgt.sid', token, { httpOnly: true, secure: true, sameSite: 'Strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
         return res.status(200).json({ success: true, message: "User registered successfully. Please verify your email.", data: { id: newUser._id, user: newUser, token: token, role: newUser.role } });
     } catch (error) {
-        console.log(error)
+        console.log(error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

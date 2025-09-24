@@ -66,7 +66,7 @@ exports.ChangePassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   if (!oldPassword || !newPassword) return res.status(400).json({ success: false, message: 'Both old and new passwords are required.' });
   try {
-    const user = await AdminModel.findById(req.user._id);
+    const user = await AdminModel.findById(req.admin._id);
     if (!user) return res.status(404).json({ success: false, message: 'Admin not found' });
     const isMatch = srPassword.compare(user.password, oldPassword);
     if (!isMatch) return res.status(400).json({ success: false, message: 'Old password is incorrect' });
