@@ -48,9 +48,9 @@ exports.WalletWithdrawalRequest = async (req, res) => {
         const user = await IncomeDetailModel.findOne({ user: req.user._id }, { currentIncome: 1, user: 1, withdrawal: 1 }).populate({ path: "user", select: "username account" })
         if (!user) res.status(500).json({ success: false, message: 'User does not exist.' });
         if (user.currentIncome < amountNumber) return res.status(500).json({ success: false, message: `Insufficient balance. Please try again with an amount within your available limit.` });
-        const id = generateCustomId({ prefix: "SGT-TX", min: 10, max: 10 });
+        const id = generateCustomId({ prefix: "RNFW", min: 10, max: 10 });
         const percentageDayBise = getDailyProfitPercentage(userFind.active.activeDate);
-        const newWith = new TransactionModel({ id, clientAddress: walletAddress, mainAddress: process.env.WALLET_ADDRESS, percentage: percentageDayBise ?? 10, role: 'USER', investment: amountNumber, user: user.user, status: "Processing", type: "Withdrawal" });
+        const newWith = new TransactionModel({ id, clientAddress: walletAddress, mainAddress: process.env.WALLET_ADDRESS, percentage: percentageDayBise ?? 5, role: 'USER', investment: amountNumber, user: user.user, status: "Processing", type: "Withdrawal" });
         user.withdrawal += Number(amountNumber);
         user.currentIncome -= Number(amountNumber);
 
