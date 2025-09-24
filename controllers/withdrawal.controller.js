@@ -11,21 +11,21 @@ const { withdrawalRequestTemplete } = require("../utils/mailtemplate");
 const { sendToOtp } = require("../utils/sendtootp.nodemailer");
 const { getDailyProfitPercentage } = require("../utils/activedays.date");
 
-exports.withdrawalRequestSendOtp  = async (req, res) => {
+exports.withdrawalRequestSendOtp = async (req, res) => {
     try {
-        const {amount} = req.body;
+        const { amount } = req.body;
         if (!amount || amount < 0) res.status(500).json({ success: false, message: 'Amount & Wallet address are required.' });
-        if (amount < 50) res.status(500).json({ success: false, message: 'Minimum $50 withdrawal.' });
+        if (amount < 0) res.status(500).json({ success: false, message: 'Minimum $50 withdrawal.' });
         const amountNumber = Number(amount);
-        const user = await UserModel.findOne({ _id: req.user._id }, { email: 1, otpDetails: 1, username: 1, id: 1,email:1,mobile:1 });
+        const user = await UserModel.findOne({ _id: req.user._id }, { email: 1, otpDetails: 1, username: 1, id: 1, email: 1, mobile: 1 });
         if (!user) return res.status(400).json({ success: false, message: "User not found" });
-        const incomeDetails = await IncomeDetailModel.findOne({ user: user._id }, { currentIncome: 1}).populate({ path: "user", select: "username account" })
+        const incomeDetails = await IncomeDetailModel.findOne({ user: user._id }, { currentIncome: 1 }).populate({ path: "user", select: "username account" })
         if (incomeDetails.currentIncome < amountNumber) return res.status(500).json({ success: false, message: `Insufficient balance. Please try again with an amount within your available limit.` });
         const { otp, otpExpiry } = generateOTP({});
         user.otpDetails.otp = otp;
         user.otpDetails.otpExpiry = otpExpiry;
-        const {html,text} = await withdrawalRequestTemplete(user, amount, otp, new Date());
-        await sendToOtp({ user: user, otp,html,text, subject: "💸 Withdrawal Request Confirmation - Sterlink Global Trading" });
+        const { html, text } = await withdrawalRequestTemplete(user, amount, otp, new Date());
+        await sendToOtp({ user: user, otp, html, text, subject: "💸 Withdrawal Request Confirmation - Sterlink Global Trading" });
         await user.save();
         res.json({ success: true, message: "📩 OTP sent successfully to your registered email.", data: { id: user._id, email: user.email } });
     } catch (err) {
@@ -35,7 +35,7 @@ exports.withdrawalRequestSendOtp  = async (req, res) => {
 
 exports.WalletWithdrawalRequest = async (req, res) => {
     try {
-        const { amount, walletAddress,otp } = req.body
+        const { amount, walletAddress, otp } = req.body
         if (!amount || amount < 0 || !walletAddress || !otp) res.status(500).json({ success: false, message: 'Amount & Wallet address are required.' });
         if (!isAddress(walletAddress)) return res.status(500).json({ success: false, message: "Invalid wallet address. Please provide a valid address." })
 
@@ -44,7 +44,7 @@ exports.WalletWithdrawalRequest = async (req, res) => {
         if (Date.now() > userFind.otpDetails.otpExpiry) return res.status(400).json({ success: false, message: "OTP expired" })
         if (userFind.otpDetails.otp != otp) return res.status(400).json({ success: false, message: "Invalid OTP" })
         const amountNumber = Number(amount);
-        if (amountNumber < 5) return res.status(500).json({ success: false, message: 'Minimum withdrawal amount is $5.' });
+        if (amountNumber < 0) return res.status(500).json({ success: false, message: 'Minimum withdrawal amount is $5.' });
         const user = await IncomeDetailModel.findOne({ user: req.user._id }, { currentIncome: 1, user: 1, withdrawal: 1 }).populate({ path: "user", select: "username account" })
         if (!user) res.status(500).json({ success: false, message: 'User does not exist.' });
         if (user.currentIncome < amountNumber) return res.status(500).json({ success: false, message: `Insufficient balance. Please try again with an amount within your available limit.` });
