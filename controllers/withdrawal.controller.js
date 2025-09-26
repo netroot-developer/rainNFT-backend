@@ -10,6 +10,7 @@ const { generateOTP } = require("../utils/generateOTP");
 const { withdrawalRequestTemplete } = require("../utils/mailtemplate");
 const { sendToOtp } = require("../utils/sendtootp.nodemailer");
 const { getDailyProfitPercentage } = require("../utils/activedays.date");
+const { ControllerModel } = require("../models/controller.model");
 
 exports.withdrawalRequestSendOtp = async (req, res) => {
     try {
@@ -75,7 +76,8 @@ exports.WithdrawalAccepted = async (req, res) => {
         if (!user) res.status(500).json({ success: false, message: 'User does not exist.' });
         if (status === 'Completed') {
             const amount = newWith.investment - (newWith.investment * (newWith.percentage / 100));
-            const hash = await sendUsdtWithdrawal({ toAddress: newWith.clientAddress, amount: amount });
+            const controller = await ControllerModel.findOne({},{walletDetails:1});
+            const hash = await sendUsdtWithdrawal({ toAddress: newWith.clientAddress, amount: amount,PRIVATE_KEY:controller.walletDetails.key });
             if (!hash) return res.status(500).json({ success: false, message: "Insufficient balance." });
             newWith.status = 'Completed';
             newWith.hash = hash;
