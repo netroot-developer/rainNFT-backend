@@ -11,4 +11,4 @@ function getDailyProfitPercentage(activeDate) {
   if (diffDays < 40) return 10;   // After 30 days but before 40
   return 5;                       // After 40 days (fixed)
 }
-module.exports = {getDailyProfitPercentage}
+module.exports = {getDailyProfitPercentage};

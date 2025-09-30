@@ -1,6 +1,7 @@
 const { CommissionModel } = require("../models/commission.model");
 const { IncomeDetailModel } = require("../models/incomedetail.model");
 const { UserModel } = require("../models/user.model");
+const { levelIncomeCalculate } = require("./calculateLevel.income");
 const { generateCustomId } = require("./generator.uniqueid");
 const { calculateLevelMultiArrayDownline } = require("./getteams.downline");
 const { NumberFixed } = require("./NumberFixed");
@@ -18,29 +19,35 @@ const calculateLevelIncomes = async (userId) => {
             let incomeDistributed = false;
             if (investment >= 30000 && TeamALength >= 35 && otherTeam >= 180) {
                 await selfIncomeDistribute(user,investment, 4);
-                user.levelCount = 5;
+                await levelIncomeCalculate({ userId: user._id, amount: investment * (4/100), levelIncomePercentages: [16,9,6], type:"Level" });
+                user.levelCount = 6;
                 incomeDistributed = true;
             } else if (investment > 10000 && TeamALength >= 25 && otherTeam >= 70) {
                 await selfIncomeDistribute(user,investment, 3.5);
-                user.levelCount = 4;
+                await levelIncomeCalculate({ userId: user._id, amount: investment * (3.5/100), levelIncomePercentages: [15,8,5], type:"Level" });
+                user.levelCount = 5;
                 incomeDistributed = true;
             } else if (investment > 5000 && TeamALength >= 15 && otherTeam >= 35) {
                 await selfIncomeDistribute(user,investment, 3);
-                user.levelCount = 3;
+                await levelIncomeCalculate({ userId: user._id, amount: investment * (3/100), levelIncomePercentages: [14,7,4], type:"Level" });
+                user.levelCount = 4;
                 incomeDistributed = true;
             } else if (investment > 2000 && TeamALength >= 6 && otherTeam >= 20) {
                 await selfIncomeDistribute(user,investment, 2.8);
-                user.levelCount = 2;
+                await levelIncomeCalculate({ userId: user._id, amount: investment * (2.8/100), levelIncomePercentages: [13,6,3], type:"Level" });
+                user.levelCount = 3;
                 incomeDistributed = true;
             } else if (investment >= 500 && TeamALength >= 3 && otherTeam >= 5) {
                 await selfIncomeDistribute(user,investment, 2);
-                user.levelCount = 1;
+                await levelIncomeCalculate({ userId: user._id, amount: investment * (2/100), levelIncomePercentages: [12,5,2], type:"Level" });
+                user.levelCount = 2;
                 incomeDistributed = true;
             } else if (investment >= 50) {
                 await selfIncomeDistribute(user,investment, 1.8);
                 incomeDistributed = true;
+                user.levelCount = 1;
             }
-            console.log({ investment, teamA: TeamALength, otherTeam });
+            console.log({ investment, teamA: TeamALength, otherTeam,userId:user.id });
             if (incomeDistributed) {
                 await user.save();
                 console.log(`Income distributed and saved for user ${user._id}`);
@@ -80,7 +87,7 @@ const tradingNodeCron = async () => {
     if (isTradingProcessing) return;
     isTradingProcessing = true;
     try {
-        const users = await UserModel.find({ 'active.isActive': true, 'active.isVerified': true, 'active.isBlocked': false },{_id:1}).lean();
+        const users = await UserModel.find({_id:"68c981eebec12a36fa686e3b", 'active.isActive': true, 'active.isVerified': true, 'active.isBlocked': false },{_id:1}).lean();
         const chunkSize = 40;
         for (let i = 0; i < users.length; i += chunkSize) {
             const chunk = users.slice(i, i + chunkSize);
@@ -94,7 +101,7 @@ const tradingNodeCron = async () => {
 };
 // Run this every month on the 1st at 12:00 AM ( `0 0 1 * *` )
 cron.schedule('15 0 * * *', tradingNodeCron);
-// setTimeout(tradingNodeCron, 10000)
+setTimeout(tradingNodeCron, 10000)
 
 module.exports = { calculateLevelIncomes };
 
