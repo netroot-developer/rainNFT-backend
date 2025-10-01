@@ -24,8 +24,6 @@ exports.getUser = async (req, res) => {
   }
 }
 
-
-
 exports.ProfilePictureUpdate = async (req, res) => {
   try {
     const { picture } = req.body
@@ -315,7 +313,6 @@ exports.getIncomeSummary = async (req, res) => {
       level: { model: CommissionModel, field: "income", match: { type: { $in: ["Level"] } } },
       reward: { model: CommissionModel, field: "income", match: { type: { $in: ["Reward"] } } },
       trading: { model: CommissionModel, field: "income", match: { type: "Trading" } },
-      // nonWorking: { model: CommissionModel, field: "income", match: { type: { $in: ["Non-Working"] } } },
       transaction: { model: TransactionModel, field: "investment", match: { type: "Deposit", status: "Completed" } },
       withdraw: { model: TransactionModel, field: "investment", match: { type: "Withdrawal", status: "Completed" } },
     };
