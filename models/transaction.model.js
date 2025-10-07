@@ -19,6 +19,9 @@ const transactionSchema = new mongoose.Schema({
     finalAmount: {
         type: Number,
     },
+    remainInvestment:{
+        type:Number
+    },
     admincharges: {
         type: Number,
     },

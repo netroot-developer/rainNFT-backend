@@ -26,45 +26,133 @@ exports.withdrawalRequestSendOtp = async (req, res) => {
         user.otpDetails.otp = otp;
         user.otpDetails.otpExpiry = otpExpiry;
         const { html, text } = await withdrawalRequestTemplete(user, amount, otp, new Date());
-        await sendToOtp({ user: user, otp, html, text, subject: "💸 Withdrawal Request Confirmation - Sterlink Global Trading" });
+        await sendToOtp({ user: user, otp, html, text, subject: "💸 Withdrawal Request Confirmation - Rain NFT" });
         await user.save();
-        res.json({ success: true, message: "📩 OTP sent successfully to your registered email.", data: { id: user._id, email: user.email } });
+        res.status(200).json({ success: true, message: "📩 OTP sent successfully to your registered email.", data: { id: user._id, email: user.email } });
     } catch (err) {
         res.status(500).json({ success: false, message: `⚠️ ${err.message}` });
     }
 };
 
+// exports.WalletWithdrawalRequest = async (req, res) => {
+//     try {
+//         const { amount, walletAddress, otp } = req.body
+//         if (!amount || amount < 0 || !walletAddress || !otp) res.status(500).json({ success: false, message: 'Amount & Wallet address are required.' });
+//         if (!isAddress(walletAddress)) return res.status(500).json({ success: false, message: "Invalid wallet address. Please provide a valid address." })
+
+//         const userFind = await UserModel.findById(req.user._id,{otpDetails:1,"active.activeDate":1})
+//         if (!userFind.otpDetails.otp || !userFind.otpDetails.otpExpiry) return res.status(400).json({ success: false, message: "OTP not generated" });
+//         if (Date.now() > userFind.otpDetails.otpExpiry) return res.status(400).json({ success: false, message: "OTP expired" })
+//         if (userFind.otpDetails.otp != otp) return res.status(400).json({ success: false, message: "Invalid OTP" })
+//         const amountNumber = Number(amount);
+//         if (amountNumber < 0) return res.status(500).json({ success: false, message: 'Minimum withdrawal amount is $5.' });
+//         const user = await IncomeDetailModel.findOne({ user: req.user._id }, { currentIncome: 1, user: 1, withdrawal: 1 }).populate({ path: "user", select: "username account" })
+//         if (!user) res.status(500).json({ success: false, message: 'User does not exist.' });
+//         if (user.currentIncome < amountNumber) return res.status(500).json({ success: false, message: `Insufficient balance. Please try again with an amount within your available limit.` });
+//         const id = generateCustomId({ prefix: "RNFW", min: 10, max: 10 });
+//         const percentageDayBise = getDailyProfitPercentage(userFind.active.activeDate);
+//         const newWith = new TransactionModel({ id, clientAddress: walletAddress, mainAddress: process.env.WALLET_ADDRESS, percentage: percentageDayBise ?? 5, role: 'USER', investment: amountNumber, user: user.user, status: "Processing", type: "Withdrawal" });
+//         user.withdrawal += Number(amountNumber);
+//         user.currentIncome -= Number(amountNumber);
+
+//         userFind.otpDetails.otp = null; // clear otp
+//         userFind.otpDetails.otpExpiry = null;
+//         await user.save();
+//         await newWith.save();
+//         res.status(201).json({ success: true, data: { amount, walletAddress: user?.user?.account }, message: 'Your withdrawal request has been placed successfully. Settlement will be done within 24 hours.' })
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ success: false, message: error.message })
+//     }
+// }
+
+
+
+// let amount = 30;
+// let currentIncome = 90;
+// let investment = 80;
+// let overlap = 0;
+
+// // 🔹 Calculate remaining after currentIncome deduction
+// let remainingAmount = currentIncome - amount;
+
+// // 🔹 If remainingAmount < investment, calculate overlap
+// if (remainingAmount < investment) {
+//     overlap = investment - remainingAmount;  // amount to deduct additionally from investment
+//     investment -= overlap;                   // deduct overlap from investment
+// } 
+
+// currentIncome -= amount;  // deduct from currentIncome
+
+// console.log("currentIncome:", currentIncome);
+// console.log("investment:", investment);
+// console.log("overlap:", overlap);
+
+
 exports.WalletWithdrawalRequest = async (req, res) => {
     try {
-        const { amount, walletAddress, otp } = req.body
-        if (!amount || amount < 0 || !walletAddress || !otp) res.status(500).json({ success: false, message: 'Amount & Wallet address are required.' });
-        if (!isAddress(walletAddress)) return res.status(500).json({ success: false, message: "Invalid wallet address. Please provide a valid address." })
+        const { amount, walletAddress, otp } = req.body;
 
-        const userFind = await UserModel.findById(req.user._id,{otpDetails:1,"active.activeDate":1})
-        if (!userFind.otpDetails.otp || !userFind.otpDetails.otpExpiry) return res.status(400).json({ success: false, message: "OTP not generated" });
-        if (Date.now() > userFind.otpDetails.otpExpiry) return res.status(400).json({ success: false, message: "OTP expired" })
-        if (userFind.otpDetails.otp != otp) return res.status(400).json({ success: false, message: "Invalid OTP" })
+        if (!amount || amount <= 0 || !walletAddress || !otp)
+            return res.status(400).json({ success: false, message: 'Amount, wallet address, and OTP are required.' });
+
+        if (!isAddress(walletAddress))
+            return res.status(400).json({ success: false, message: "Invalid wallet address. Please provide a valid address." });
+
+        // ✅ Fetch user with OTP and investment
+        const userFind = await UserModel.findById(req.user._id, {
+            otpDetails: 1,
+            "active.activeDate": 1,
+            investment: 1
+        });
+
+        if (!userFind) return res.status(400).json({ success: false, message: "User not found." });
+        if (!userFind?.otpDetails?.otp || !userFind?.otpDetails?.otpExpiry) return res.status(400).json({ success: false, message: "OTP not generated." });
+        if (Date.now() > userFind.otpDetails.otpExpiry) return res.status(400).json({ success: false, message: "OTP expired." });
+        if (userFind.otpDetails.otp != otp) return res.status(400).json({ success: false, message: "Invalid OTP." });
         const amountNumber = Number(amount);
-        if (amountNumber < 0) return res.status(500).json({ success: false, message: 'Minimum withdrawal amount is $5.' });
-        const user = await IncomeDetailModel.findOne({ user: req.user._id }, { currentIncome: 1, user: 1, withdrawal: 1 }).populate({ path: "user", select: "username account" })
-        if (!user) res.status(500).json({ success: false, message: 'User does not exist.' });
-        if (user.currentIncome < amountNumber) return res.status(500).json({ success: false, message: `Insufficient balance. Please try again with an amount within your available limit.` });
+        if (amountNumber < 5) return res.status(400).json({ success: false, message: 'Minimum withdrawal amount is $5.' });
+        const incomeDetail = await IncomeDetailModel.findOne({ user: req.user._id }, { currentIncome: 1, user: 1, withdrawal: 1 }).populate({ path: "user", select: "username account" });
+        if (!incomeDetail) return res.status(400).json({ success: false, message: 'User income record not found.' });
+        if (incomeDetail.currentIncome < amountNumber) return res.status(400).json({ success: false, message: `Insufficient balance. Available: $${totalAvailable}` });
         const id = generateCustomId({ prefix: "RNFW", min: 10, max: 10 });
         const percentageDayBise = getDailyProfitPercentage(userFind.active.activeDate);
-        const newWith = new TransactionModel({ id, clientAddress: walletAddress, mainAddress: process.env.WALLET_ADDRESS, percentage: percentageDayBise ?? 5, role: 'USER', investment: amountNumber, user: user.user, status: "Processing", type: "Withdrawal" });
-        user.withdrawal += Number(amountNumber);
-        user.currentIncome -= Number(amountNumber);
+        const newWith = new TransactionModel({
+            id, clientAddress: walletAddress, mainAddress: process.env.WALLET_ADDRESS,
+            percentage: percentageDayBise ?? 5,
+            investment: amountNumber,
+            user: incomeDetail.user,
+            status: "Processing",
+            type: "Withdrawal"
+        });
 
-        userFind.otpDetails.otp = null; // clear otp
+        let overlapAmount = 0;
+        let remainingAmount = incomeDetail.currentIncome - amountNumber;
+        if (remainingAmount < userFind.investment) {
+            overlapAmount = userFind.investment - remainingAmount;
+            userFind.investment -= overlapAmount;
+            if(userFind.investment < 0) userFind.investment -= 0;
+            newWith.remainInvestment = overlapAmount;
+        }
+        incomeDetail.currentIncome -= amountNumber;
+        incomeDetail.withdrawal += amountNumber;
+
+        // console.log("incomeDetail.currentIncome:", incomeDetail.currentIncome);
+        // console.log("userFind.investment:", userFind.investment);
+        // console.log("overlapAmount:", overlapAmount);
+
+        userFind.otpDetails.otp = null;
         userFind.otpDetails.otpExpiry = null;
-        await user.save();
-        await newWith.save();
-        res.status(201).json({ success: true, data: { amount, walletAddress: user?.user?.account }, message: 'Your withdrawal request has been placed successfully. Settlement will be done within 24 hours.' })
+        if (!userFind.account) userFind.account = walletAddress;
+        await Promise.all([incomeDetail.save(), userFind.save(), newWith.save()]);
+        res.status(201).json({ success: true, data: { amount, walletAddress }, message: 'Your withdrawal request has been placed successfully. Settlement will be done within 24 hours.' })
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: error.message })
+        console.error("❌ Withdrawal Error:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
-}
+};
+
+
 
 exports.WithdrawalAccepted = async (req, res) => {
     try {
@@ -76,8 +164,8 @@ exports.WithdrawalAccepted = async (req, res) => {
         if (!user) res.status(500).json({ success: false, message: 'User does not exist.' });
         if (status === 'Completed') {
             const amount = newWith.investment - (newWith.investment * (newWith.percentage / 100));
-            const controller = await ControllerModel.findOne({},{walletDetails:1});
-            const hash = await sendUsdtWithdrawal({ toAddress: newWith.clientAddress, amount: amount,PRIVATE_KEY:controller.walletDetails.key });
+            const controller = await ControllerModel.findOne({}, { walletDetails: 1 });
+            const hash = await sendUsdtWithdrawal({ toAddress: newWith.clientAddress, amount: amount, PRIVATE_KEY: controller.walletDetails.key });
             if (!hash) return res.status(500).json({ success: false, message: "Insufficient balance." });
             newWith.status = 'Completed';
             newWith.hash = hash;
@@ -85,7 +173,11 @@ exports.WithdrawalAccepted = async (req, res) => {
             newWith.status = 'Cancelled';
             user.withdrawal -= Number(newWith.investment);
             user.currentIncome += Number(newWith.investment);
-
+            if(newWith?.remainInvestment){
+                const userFind = await UserModel.findById(newWith.user, { investment: 1 });
+                userFind.investment += Number(newWith.investment);
+                await userFind.save();
+            }
             const levelCheck = {
                 1: { min: 50, max: 499 },
                 2: { min: 500, max: 1999 },

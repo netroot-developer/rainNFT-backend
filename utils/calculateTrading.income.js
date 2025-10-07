@@ -15,7 +15,7 @@ const calculateLevelIncomes = async (userId) => {
             const { teamA, teamB, teamC } = await calculateLevelMultiArrayDownline(user._id);
             const otherTeam = teamB.length + teamC.length;
             const TeamALength = teamA.length;
-            const investment = user.income.currentIncome;
+            const investment = user.investment;
             let incomeDistributed = false;
             if (investment >= 30000 && TeamALength >= 35 && otherTeam >= 180) {
                 await selfIncomeDistribute(user,investment, 3);
@@ -99,7 +99,7 @@ const tradingNodeCron = async () => {
         isTradingProcessing = false;
     }
 };
-// Run this every month on the 1st at 12:00 AM ( `0 0 1 * *` )
+// Run this every month on the 1st at 12:15 AM ( `15 0 * * *` )
 cron.schedule('15 0 * * *', tradingNodeCron);
 // setTimeout(tradingNodeCron, 10000)
 
