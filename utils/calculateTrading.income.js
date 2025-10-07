@@ -87,7 +87,7 @@ const tradingNodeCron = async () => {
     if (isTradingProcessing) return;
     isTradingProcessing = true;
     try {
-        const users = await UserModel.find({_id:"68c981eebec12a36fa686e3b", 'active.isActive': true, 'active.isVerified': true, 'active.isBlocked': false },{_id:1}).lean();
+        const users = await UserModel.find({'active.isActive': true, 'active.isVerified': true, 'active.isBlocked': false },{_id:1}).lean();
         const chunkSize = 40;
         for (let i = 0; i < users.length; i += chunkSize) {
             const chunk = users.slice(i, i + chunkSize);
@@ -101,7 +101,7 @@ const tradingNodeCron = async () => {
 };
 // Run this every month on the 1st at 12:00 AM ( `0 0 1 * *` )
 cron.schedule('15 0 * * *', tradingNodeCron);
-setTimeout(tradingNodeCron, 10000)
+// setTimeout(tradingNodeCron, 10000)
 
 module.exports = { calculateLevelIncomes };
 
