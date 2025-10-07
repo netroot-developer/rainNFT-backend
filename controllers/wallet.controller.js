@@ -39,7 +39,7 @@ exports.walletCreate = async (req, res) => {
             newUser.token.token = token;
             await newUser.save();
             await newIncome.save();
-            res.cookie('sgt.sid', token, { httpOnly: true, secure: true, sameSite: 'Strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
+            res.cookie('rainft.sid', token, { httpOnly: true, secure: true, sameSite: 'Strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
             return res.status(200).json({ success: true, message: "User Register successfully.", data: { id: newUser._id, user: newUser, token: token, role: newUser.role, password: hashPassword } });
         }
         const walletFind = await UserModel.findOne({ email: RegExp(email, 'i') });
@@ -50,7 +50,7 @@ exports.walletCreate = async (req, res) => {
             updatedUser.token.token = token;
             await sendToOtp({ user: updatedUser, otp });
             await updatedUser.save();
-            res.cookie('sgt.sid', token, { httpOnly: true, secure: true, sameSite: 'Strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
+            res.cookie('rainft.sid', token, { httpOnly: true, secure: true, sameSite: 'Strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
             return res.status(200).json({ success: true, message: "User updated successfully. Please verify your email.", data: { id: updatedUser._id, user: updatedUser, token: token, role: updatedUser.role } });
         }
         const newUser = new UserModel({ id, username, email, mobile, otpDetails: { otp, otpExpiry }, referralLink: newReferralid, active: { isVerified: false }, sponsor: sponsor._id, password: hashPassword });
@@ -61,7 +61,7 @@ exports.walletCreate = async (req, res) => {
         await sendToOtp({ user: newUser, otp });
         await newUser.save();
         await newIncome.save();
-        res.cookie('sgt.sid', token, { httpOnly: true, secure: true, sameSite: 'Strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
+        res.cookie('rainft.sid', token, { httpOnly: true, secure: true, sameSite: 'Strict', path: '/', maxAge: 30 * 24 * 60 * 60 * 1000 });
         return res.status(200).json({ success: true, message: "User registered successfully. Please verify your email.", data: { id: newUser._id, user: newUser, token: token, role: newUser.role } });
     } catch (error) {
         console.log(error);
@@ -124,7 +124,7 @@ exports.loginUser = async (req, res) => {
         const token = await getToken(user);
         user.token.token = token;
         await user.save();
-        res.cookie('sgt.sid', token, { httpOnly: true, secure: true, sameSite: 'Strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie('rainft.sid', token, { httpOnly: true, secure: true, sameSite: 'Strict', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
         return res.status(200).json({ success: true, message: "Login successfully.", data: { user, token, id: user._id, role: user.role } });
     } catch (err) {
         console.error("Login error:", err);

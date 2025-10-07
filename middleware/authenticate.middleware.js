@@ -27,13 +27,14 @@ exports.isAdminLoggedIn = async (req, res, next) => {
  */
 
 exports.isLoggedIn = async (req, res, next) => {
-    const token = req.header('Authorization')?.replace('Bearer ', '') || req.cookies['sgt.sid'];
+    const token = req.header('Authorization')?.replace('Bearer ', '') || req.cookies['rainft.sid'];
     if (!token) return res.status(401).json({ success: false, message: "No token, authorization denied" });
     try {
         const decoded = await verifyToken(token);
         req.user = decoded;
         const user = await UserModel.findById(req.user._id);
         if (!user) return res.status(401).json({ success: false, message: "User not round." });
+        if (!user.active.isVerified) return res.status(401).json({ success: false, message: "User is not Verified. Please verify your account." });
         if (user.active.isBlocked) return res.status(401).json({ success: false, message: "User is blocked. Please contact the admin." });
         const response = checkRoleMiddleware(user, ['USER','CLIENT','user','client'])
         if (response) return res.status(401).json({ success: false, message: "Access Denied!" })
