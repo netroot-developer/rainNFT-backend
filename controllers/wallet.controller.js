@@ -147,7 +147,7 @@ exports.forgotPasswordSendOtp = async (req, res) => {
         user.otpDetails.otpExpiry = otpExpiry;
         await sendToOtp({ user: user, otp, subject: "Password Reset OTP - Valid for 10 minutes" });
         await user.save();
-        res.json({ success: true, message: "📩 OTP sent successfully to your registered email.", data: { id: user._id, email: user.email } });
+        res.status(200).json({ success: true, message: "📩 OTP sent successfully to your registered email.", data: { id: user._id, email: user.email } });
     } catch (err) {
         res.status(500).json({ success: false, message: `⚠️ ${err.message}` });
     }
@@ -165,7 +165,7 @@ exports.forgotOtpVerify = async (req, res) => {
         user.otpDetails.otpExpiry = null;
         user.password = srPassword.hash(password);
         await user.save();
-        res.json({ success: true, message: "✅ OTP verified successfully. You can now reset your password." });
+        res.status(200).json({ success: true, message: "✅ OTP verified successfully. You can now reset your password." });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -181,7 +181,7 @@ exports.passwordChange = async (req, res) => {
         if (!isMatch) return res.status(400).json({ success: false, message: "Invalid credentials !." });
         user.password = srPassword.hash(newPassword);
         await user.save();
-        res.json({ success: true, message: "✅ Password change successfully." });
+        res.status(200).json({ success: true, message: "✅ Password change successfully." });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
