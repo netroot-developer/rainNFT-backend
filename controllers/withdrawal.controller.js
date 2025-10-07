@@ -131,7 +131,7 @@ exports.WalletWithdrawalRequest = async (req, res) => {
         if (remainingAmount < userFind.investment) {
             overlapAmount = userFind.investment - remainingAmount;
             userFind.investment -= overlapAmount;
-            if(userFind.investment < 0) userFind.investment -= 0;
+            if(userFind.investment < 0) userFind.investment = 0;
             newWith.remainInvestment = overlapAmount;
         }
         incomeDetail.currentIncome -= amountNumber;
